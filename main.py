@@ -1,45 +1,32 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 import json
-import os
-from typing import Optional
-
-# Optional: Uncomment if using OpenAI
-# from openai import AsyncOpenAI
-# client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 app = FastAPI(title="AI Commander Backend")
 
-# Enable CORS for frontend connection
+# ✅ CORRECT CORS Configuration
 app.add_middleware(
     CORSMiddleware,
-    app.add_middleware(
-    CORSMiddleware,
     allow_origins=[
-        "http://localhost:5173",  # Local development
-        "http://localhost:3000",  # Alternative local port
-        "https://*.vercel.app",   # All Vercel preview deployments
-        "https://your-app-name.vercel.app",  # Your production domain (update this!)
-        # Add your custom domain if you have one
+        "http://localhost:5173",
+        "http://localhost:3000",
+        "https://*.vercel.app",
+        "https://ai-commander-frontend-6skd.vercel.app/",
     ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
-)
 )
 
 class CommandParser:
     """Parse natural language commands into structured strategies"""
     
     def parse_command(self, command: str) -> dict:
-        """
-        Parse command into strategy object
-        This is a simple rule-based parser. Replace with LLM for better results.
-        """
+        """Parse command into strategy object"""
         command_lower = command.lower()
         
         # Determine formation
-        formation = "wedge"  # default
+        formation = "wedge"
         if "spread" in command_lower or "scatter" in command_lower:
             formation = "spread"
         elif "line" in command_lower or "row" in command_lower:
@@ -48,7 +35,7 @@ class CommandParser:
             formation = "circle"
         
         # Determine target
-        target = "patrol"  # default
+        target = "patrol"
         if "attack" in command_lower or "enemy" in command_lower or "offensive" in command_lower:
             target = "enemies"
         elif "defend" in command_lower or "protect" in command_lower or "base" in command_lower:
@@ -57,7 +44,7 @@ class CommandParser:
             target = "resources"
         
         # Determine aggression level
-        aggression = 0.5  # default
+        aggression = 0.5
         if "aggressive" in command_lower or "hard" in command_lower or "full force" in command_lower:
             aggression = 0.9
         elif "careful" in command_lower or "cautious" in command_lower:
@@ -72,13 +59,6 @@ class CommandParser:
             "target": target,
             "aggression": aggression
         }
-    
-    async def parse_with_llm(self, command: str) -> dict:
-        """
-        Use OpenAI to parse command (optional - requires API key)
-        Uncomment and configure if you want to use real LLM
-        """
-        return self.parse_command(command)
 
 parser = CommandParser()
 
@@ -91,11 +71,14 @@ async def root():
         "version": "1.0.0"
     }
 
+@app.get("/health")
+async def health():
+    """Health check"""
+    return {"status": "healthy"}
+
 @app.websocket("/ws/commander")
 async def commander_websocket(websocket: WebSocket):
-    """
-    WebSocket endpoint for receiving commands and sending strategies
-    """
+    """WebSocket endpoint for receiving commands and sending strategies"""
     await websocket.accept()
     print("✅ Client connected to AI Commander")
     
@@ -121,7 +104,6 @@ async def commander_websocket(websocket: WebSocket):
                 print(f"🎮 Processing command: '{command}'")
                 
                 # Parse command into strategy
-                # Use parse_with_llm() if you have OpenAI API key configured
                 strategy = parser.parse_command(command)
                 
                 print(f"📊 Generated strategy: {strategy}")
