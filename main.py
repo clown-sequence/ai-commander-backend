@@ -13,10 +13,19 @@ app = FastAPI(title="AI Commander Backend")
 # Enable CORS for frontend connection
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, specify your frontend URL
+    app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173",  # Local development
+        "http://localhost:3000",  # Alternative local port
+        "https://*.vercel.app",   # All Vercel preview deployments
+        "https://your-app-name.vercel.app",  # Your production domain (update this!)
+        # Add your custom domain if you have one
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+)
 )
 
 class CommandParser:
@@ -69,30 +78,6 @@ class CommandParser:
         Use OpenAI to parse command (optional - requires API key)
         Uncomment and configure if you want to use real LLM
         """
-        # system_prompt = '''You are a tactical AI commander. 
-        # Translate natural language commands into structured strategies.
-        
-        # Respond ONLY with JSON in this exact format:
-        # {
-        #     "formation": "spread|line|wedge|circle",
-        #     "target": "enemies|base|resources|patrol",
-        #     "aggression": 0.0-1.0
-        # }
-        # '''
-        
-        # response = await client.chat.completions.create(
-        #     model="gpt-4",
-        #     messages=[
-        #         {"role": "system", "content": system_prompt},
-        #         {"role": "user", "content": command}
-        #     ],
-        #     temperature=0.7
-        # )
-        
-        # strategy = json.loads(response.choices[0].message.content)
-        # return strategy
-        
-        # Fallback to rule-based if LLM not configured
         return self.parse_command(command)
 
 parser = CommandParser()
